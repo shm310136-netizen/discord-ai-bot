@@ -1,13 +1,13 @@
 {
   "name": "discord-ai-bot",
   "version": "1.0.0",
-  "description": "Simple Discord AI Chat Bot",
+  "description": "Discord AI Chat Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.21.0",
-    "openai": "^5.12.2"
+    "@google/generative-ai": "^0.24.1"
   }
 }
