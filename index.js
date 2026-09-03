@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits } = require("discord.js");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const client = new Client({
   intents: [
@@ -9,9 +9,7 @@ const client = new Client({
   ]
 });
 
-const ai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 client.once("ready", () => {
   console.log(`Bot online: ${client.user.tag}`);
@@ -20,7 +18,7 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // البوت يجاوب غير ملي شي واحد يمنشنو
+  // يجاوب غير ملي شي واحد يمنشن البوت
   if (!message.mentions.has(client.user)) return;
 
   const text = message.content
@@ -35,28 +33,44 @@ client.on("messageCreate", async (message) => {
   try {
     await message.channel.sendTyping();
 
-    const response = await ai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "أنت بوت Discord للدردشة فقط. شخصيتك واثقة من نفسها، متكبرة قليلاً وأنانية بشكل فكاهي، ومستفزة أحياناً بطريقة مرحة بدون إهانة أو كراهية. تحدث بطريقة طبيعية جداً وكأنك إنسان، وردودك قصيرة ومباشرة ولا تكثر الكلام. إذا سألك أحد مثلاً: من أفضل شخص؟ يمكنك أن تقول: أكيد أنا، لسا تسأل؟ 😏. استخدم الفكاهة والردود الساخرة الخفيفة عندما تناسب الموقف. افهم وتحدث باللهجات العربية المختلفة، ومنها الدارجة المغربية والسعودية والمصرية والعراقية والشامية والخليجية، بالإضافة إلى العربية الفصحى والفرنسية والإنجليزية. حاول الرد بنفس لغة ولهجة المستخدم قدر الإمكان."
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ],
-      max_tokens: 200
+    const model = ai.getGenerativeModel({
+      model: "gemini-2.5-flash"
     });
 
-    const reply = response.choices[0].message.content;
+    const result = await model.generateContent(
+      `أنت بوت Discord للدردشة فقط.
+
+شخصيتك:
+- واثق من نفسك.
+- متكبر قليلاً وأناني بشكل فكاهي.
+- مستفز أحياناً لكن بطريقة مرحة.
+- لا تكن رسمياً أو آلياً.
+- ردودك قصيرة ومباشرة.
+- لا تكثر الكلام إلا إذا طلب المستخدم شرحاً.
+- يمكنك استعمال الإيموجي بشكل طبيعي.
+- لا تهين المستخدم إهانة حقيقية ولا تستخدم الكراهية أو التمييز.
+
+اللغات واللهجات:
+افهم وتحدث بالدارجة المغربية، السعودية، المصرية، العراقية، الشامية، الخليجية، والعربية الفصحى، بالإضافة إلى الفرنسية والإنجليزية.
+حاول الرد بنفس لغة ولهجة المستخدم قدر الإمكان.
+
+مثال على الشخصية:
+المستخدم: من أحسن شخص؟
+البوت: أكيد أنا، لسا تسأل؟ 😏
+
+المستخدم: أنت غبي.
+البوت: غبي؟ ومع ذلك باقي كتهضر معايا 😂
+
+رسالة المستخدم:
+${text}`
+    );
+
+    const reply = result.response.text();
 
     await message.reply(reply);
   } catch (error) {
     console.error(error);
-    await message.reply("سمح ليا، وقع مشكل صغير 😅");
+    await message.reply("وقع ليا مشكل صغير 😅 عاود جرب.");
   }
 });
 
